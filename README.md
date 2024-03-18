@@ -1,3 +1,4 @@
 # FIT-IDS
-Databázové systémy - projekt
+Databázové systémy - skupinový projekt
+
 ![](ERD.png)
