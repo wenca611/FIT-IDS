@@ -21,7 +21,7 @@ CREATE SEQUENCE SQ_Objednavka			    START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SQ_Zaznam_o_platbe		START WITH 1 INCREMENT BY 1;
 CREATE SEQUENCE SQ_Stul           		START WITH 1 INCREMENT BY 1;
 
--- VYTVORENI INDEXU TODO
+-- VYTVORENI INDEXU
 
 -- explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů, přičemž musí být uveden
 -- také příslušný dotaz, na který má index vliv, a v dokumentaci popsán způsob využití indexu v tomto dotazy
@@ -194,7 +194,7 @@ BEGIN
 	END IF;
 END;
 
--- PROCEDURY TODO
+-- PROCEDURY
 
 -- vytvoření alespoň dvou netriviálních uložených procedur vč. jejich předvedení, ve kterých se musí (dohromady) vyskytovat
 -- alespoň jednou kurzor, ošetření výjimek a použití proměnné s datovým typem odkazujícím se na řádek či typ sloupce tabulky
@@ -236,7 +236,7 @@ GRANT EXECUTE ON nazev_procedury2		TO xpastu02;
 
 GRANT CREATE MATERIALIZED VIEW      TO xpastu02;
 
--- MATERIALIZOVANY POHLED TODO
+-- MATERIALIZOVANY POHLED
 
 -- vytvořen alespoň jeden materializovaný pohled patřící druhému členu týmu a používající tabulky definované prvním
 -- členem týmu (nutno mít již definována přístupová práva), vč. SQL příkazů/dotazů ukazujících, jak materializovaný pohled funguje
@@ -709,7 +709,6 @@ EXISTS (SELECT * FROM Obsahuje WHERE  Obsahuje.Nazev_polozky = Polozka_objednavk
 EXISTS (SELECT Surovina.Cena FROM Surovina WHERE Surovina.Nazev_suroviny = Obsahuje.Nazev_suroviny AND Cena > 50 )));
 
 
--- TODO
 -- přičemž v dokumentaci musí být srozumitelně popsáno, jak proběhne dle toho
 -- výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení,
 -- atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu),
