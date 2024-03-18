@@ -1,36 +1,13 @@
+
 -- IDS 2018/2019 ------------------
--- PROJEKT - POSLEDNI CAST
+-- PROJEKT CAST 2
 -- xvorli01, xpastu02
 
--- UPRAVA FORMATU CASU--
+-- UPRAVA FORMATU CASU --
 
-ALTER SESSION SET NLS_DATE_FORMAT = 'DD-MM-YYYY HH24:MI:SS';
-ALTER SESSION SET time_zone = 'CET';
+ALTER SESSION SET NLS_DATE_FORMAT = 'DD.MM.YYYY HH24:MI';
 
--- VYTVORENI SEKVENCI --
-
-DROP SEQUENCE SQ_Zamestnanec;
-DROP SEQUENCE SQ_Rezervace;
-DROP SEQUENCE SQ_Objednavka;
-DROP SEQUENCE SQ_Zaznam_o_platbe;
-DROP SEQUENCE SQ_Stul;
-
-CREATE SEQUENCE SQ_Zamestnanec			  START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE SQ_Rezervace			    START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE SQ_Objednavka			    START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE SQ_Zaznam_o_platbe		START WITH 1 INCREMENT BY 1;
-CREATE SEQUENCE SQ_Stul           		START WITH 1 INCREMENT BY 1;
-
--- VYTVORENI INDEXU
-
--- explicitní vytvoření alespoň jednoho indexu tak, aby pomohl optimalizovat zpracování dotazů, přičemž musí být uveden
--- také příslušný dotaz, na který má index vliv, a v dokumentaci popsán způsob využití indexu v tomto dotazy
-
-DROP INDEX Testovaci_index;
-
-CREATE INDEX Testovaci_index ON Zamestnanec (Prijmeni);
-
--- VYTVORENI TABULEK --
+-- ZRUSENI EXISTUJICICH TABULEK --
 
 DROP TABLE Zamestnanec CASCADE CONSTRAINTS;
 DROP TABLE Rezervace CASCADE CONSTRAINTS;
@@ -46,8 +23,26 @@ DROP TABLE Sprava_objednavky CASCADE CONSTRAINTS;
 DROP TABLE Obsahuje CASCADE CONSTRAINTS;
 DROP TABLE Obsah_objednavky CASCADE CONSTRAINTS;
 
+-- ZRUSENI EXISTUJICICH SEKVENCI --
+
+DROP SEQUENCE SQ_Zamestnanec;
+DROP SEQUENCE SQ_Rezervace;
+DROP SEQUENCE SQ_Objednavka;
+DROP SEQUENCE SQ_Zaznam_o_platbe;
+DROP SEQUENCE SQ_Stul;
+
+-- VYTVORENI SEKVENCI --
+
+CREATE SEQUENCE SQ_Zamestnanec			  START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SQ_Rezervace			    START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SQ_Objednavka			    START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SQ_Zaznam_o_platbe		START WITH 1 INCREMENT BY 1;
+CREATE SEQUENCE SQ_Stul           		START WITH 1 INCREMENT BY 1;
+
+-- VYTVORENI TABULEK --
+
 CREATE TABLE Zamestnanec (
-  Cislo_zamestnance   INTEGER         NOT NULL,
+  Cislo_zamestnance   INTEGER         DEFAULT SQ_Zamestnanec.nextval  NOT NULL,
   Jmeno               VARCHAR(40)     NOT NULL CHECK(LENGTH(TRIM(Jmeno))>=2),
   Prijmeni            VARCHAR(40)     NOT NULL CHECK(LENGTH(TRIM(Prijmeni))>=2),
   Rodne_cislo         VARCHAR(11)     NOT NULL CHECK(MOD(CAST(REPLACE(Rodne_cislo, '/', '') AS INTEGER), 11 ) = 0) UNIQUE,
@@ -129,7 +124,7 @@ CREATE TABLE Obsah_objednavky (
   Nazev_polozky     VARCHAR(100)
 );
 
--- PRIMARNI KLICE --
+-- URCENI PRIMARNICH KLICU --
 
 ALTER TABLE Zamestnanec ADD CONSTRAINT PK_Zamestnanec PRIMARY KEY (Cislo_zamestnance);
 ALTER TABLE Rezervace ADD CONSTRAINT PK_Rezervace PRIMARY KEY (ID_rezervace);
@@ -146,7 +141,7 @@ ALTER TABLE Sprava_objednavky ADD CONSTRAINT PK_Sprava_objednavky PRIMARY KEY (C
 ALTER TABLE Obsahuje ADD CONSTRAINT PK_Obsahuje PRIMARY KEY (Nazev_suroviny,Nazev_polozky);
 ALTER TABLE Obsah_objednavky ADD CONSTRAINT PK_Obsah_objednavky PRIMARY KEY (ID_objednavky,NAzev_polozky);
 
--- CIZI KLICE --
+-- URCENI CIZICH KLICU --
 
 ALTER TABLE Objednavka ADD CONSTRAINT FK_O_Platba FOREIGN KEY (ID_rezervace) REFERENCES Rezervace(ID_rezervace);
 
@@ -170,86 +165,6 @@ ALTER TABLE Obsahuje ADD CONSTRAINT FK_OB_Polozka FOREIGN KEY (Nazev_polozky) RE
 
 ALTER TABLE Obsah_objednavky ADD CONSTRAINT FK_OO_Objednavka FOREIGN KEY (ID_objednavky) REFERENCES Objednavka(ID_objednavky);
 ALTER TABLE Obsah_objednavky ADD CONSTRAINT FK_OO_Polozka FOREIGN KEY (Nazev_polozky) REFERENCES Polozka_objednavky(Nazev_polozky);
-
--- TRIGGERY
-
--- Automaticky vygeneruje cas a datum vlozeni zaznamu o platbe
-CREATE OR REPLACE TRIGGER Zaznam_o_platbe_cas
-BEFORE INSERT
-ON Zaznam_o_platbe
-FOR EACH ROW
-BEGIN
-  :NEW.Datum_cas := (sysdate);
-END;
-
--- Automaticky generuje PK_Cislo_zamestnance
-CREATE OR REPLACE TRIGGER Generate_PK
-BEFORE INSERT
-ON Zamestnanec
-FOR EACH ROW
-BEGIN
-	IF (:NEW.Cislo_zamestnance IS NULL)
-	THEN
-		:new.Cislo_zamestnance := SQ_Zamestnanec.nextval;
-	END IF;
-END;
-
--- PROCEDURY
-
--- vytvoření alespoň dvou netriviálních uložených procedur vč. jejich předvedení, ve kterých se musí (dohromady) vyskytovat
--- alespoň jednou kurzor, ošetření výjimek a použití proměnné s datovým typem odkazujícím se na řádek či typ sloupce tabulky
--- (table_name.column_name%TYPE nebo table_name%ROWTYPE)
-
-CREATE OR REPLACE PROCEDURE nazev_procedury IS
-BEGIN
-
-END;
-
-EXECUTE nazev_procedury;
-
-CREATE OR REPLACE PROCEDURE nazev_procedury2 IS
-BEGIN
-
-END;
-
-EXECUTE nazev_procedury2;
-
-
--- OPRAVNENI PRO PRISTUP (SELECT * from xvorli01.zamestnanec@orclpdb.gort.fit.vutbr.cz)
-
-GRANT ALL ON Objednavka             TO xpastu02;
-GRANT ALL ON Obsah_objednavky       TO xpastu02;
-GRANT ALL ON Obsahuje               TO xpastu02;
-GRANT ALL ON Polozka_objednavky			TO xpastu02;
-GRANT ALL ON Rezervace              TO xpastu02;
-GRANT ALL ON Rezervovany_stul       TO xpastu02;
-GRANT ALL ON Sprava_objednavky			TO xpastu02;
-GRANT ALL ON Sprava_rezervace       TO xpastu02;
-GRANT ALL ON Stul				            TO xpastu02;
-GRANT ALL ON Stul_objednavky				TO xpastu02;
-GRANT ALL ON Surovina			          TO xpastu02;
-GRANT ALL ON Zamestnanec				    TO xpastu02;
-GRANT ALL ON Zaznam_o_platbe				TO xpastu02;
-
-GRANT EXECUTE ON nazev_procedury		TO xpastu02;
-GRANT EXECUTE ON nazev_procedury2		TO xpastu02;
-
-GRANT CREATE MATERIALIZED VIEW      TO xpastu02;
-
--- MATERIALIZOVANY POHLED
-
--- vytvořen alespoň jeden materializovaný pohled patřící druhému členu týmu a používající tabulky definované prvním
--- členem týmu (nutno mít již definována přístupová práva), vč. SQL příkazů/dotazů ukazujících, jak materializovaný pohled funguje
-
-CREATE MATERIALIZED VIEW Testovaci_view
-BUILD IMMEDIATE
-REFRESH COMPLETE
-ON DEMAND
-DISABLE QUERY REWRITE
-AS
-SELECT * FROM xvorli01.zamestnanec@orclpdb.gort.fit.vutbr.cz;
-
-DROP MATERIALIZED VIEW Testovaci_view;
 
 -- NAPLNENI TABULKY ZAMESTNANCI DATY --
 
@@ -279,9 +194,6 @@ VALUES ('Reese','Spark','333333/0000','Lesni 12, 77890 Praha','+420371492266');
 
 INSERT INTO Zamestnanec (Jmeno, Prijmeni, Rodne_cislo, Adresa, Telefon)
 VALUES ('Khloe','Karn','444444/0000','Novakova 23, 77890 Praha','+420326588066');
-
-INSERT INTO Zamestnanec (Jmeno, Prijmeni, Rodne_cislo, Adresa, Telefon)
-VALUES ('Mary','Smith','666666/0000','Novakova 23, 77890 Praha','+420326588011');
 
 -- NAPLNENI TABULKY REZERVACE DATY --
 
@@ -469,29 +381,29 @@ VALUES ('2','Terasa');
 
 -- NAPLNENI TABULKY ZAZNAM O PLATBE DATY --
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('K','99,90','1','7');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('09.4.2019 14:44','K','99,90','1','7');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('H','335,54','2','6');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('13.04.2019 09:00','H','335,54','2','6');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('S','59','3','5');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('15.04.2019 11:48','S','59','3','5');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('H','119','7','1');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('15.04.2019 16:03','H','119','7','1');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('K','109','7','4');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('16.04.2019 11:59','K','109','7','4');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('H','66,8','8','3');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('13.05.2019 12:00','H','66,8','8','3');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('K','218','1','9');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('24.06.2019 18:44','K','218','1','8');
 
-INSERT INTO Zaznam_o_platbe (Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
-VALUES ('S','74','5','2');
+INSERT INTO Zaznam_o_platbe (Datum_cas, Druh_platby, Celkova_cena, Cislo_zamestnance, ID_Objednavky)
+VALUES ('19.04.2019 14:20','S','74','5','2');
 
 -- NAPLNENI TABULKY OBSAH OBJEDNAVKY --
 
@@ -708,31 +620,5 @@ WHERE EXISTS (SELECT Nazev_polozky FROM Polozka_objednavky WHERE Obsah_objednavk
 EXISTS (SELECT * FROM Obsahuje WHERE  Obsahuje.Nazev_polozky = Polozka_objednavky.Nazev_polozky AND
 EXISTS (SELECT Surovina.Cena FROM Surovina WHERE Surovina.Nazev_suroviny = Obsahuje.Nazev_suroviny AND Cena > 50 )));
 
-
--- přičemž v dokumentaci musí být srozumitelně popsáno, jak proběhne dle toho
--- výpisu plánu provedení dotazu, vč. objasnění použitých prostředků pro jeho urychlení (např. použití indexu, druhu spojení,
--- atp.), a dále musí být navrnut způsob, jak konkrétně by bylo možné dotaz dále urychlit (např. zavedením nového indexu),
--- navržený způsob proveden (např. vytvořen index), zopakován EXPLAIN PLAN a jeho výsledek porovnán s výsledkem před provedením navrženého způsobu urychlení
-
--- EXPLAIN PLAN
-
--- Postup zobrazeni prijmeni zamestnancu a rezervaci pro vice nez 5 osob --
-EXPLAIN PLAN FOR
-SELECT Zamestnanec.Prijmeni, Rezervace.Pocet_osob FROM Sprava_rezervace
-LEFT JOIN Zamestnanec
-ON Sprava_rezervace.Cislo_zamestnance = Zamestnanec.Cislo_zamestnance
-RIGHT JOIN Rezervace
-ON Rezervace.ID_rezervace = Sprava_rezervace.ID_rezervace
-WHERE Pocet_osob > 5
-GROUP BY Zamestnanec.Prijmeni,Rezervace.Pocet_osob;
-SELECT * FROM TABLE(DBMS_XPLAN.display);
-
--- Postup zobrazeni objednavek, ktere obsahuji alespon jednu surovinu drazsi nez 50Kc --
-EXPLAIN PLAN FOR
-SELECT DISTINCT Obsah_objednavky.ID_objednavky FROM Obsah_objednavky
-WHERE EXISTS (SELECT Nazev_polozky FROM Polozka_objednavky WHERE Obsah_objednavky.Nazev_polozky = Polozka_objednavky.Nazev_polozky AND
-EXISTS (SELECT * FROM Obsahuje WHERE  Obsahuje.Nazev_polozky = Polozka_objednavky.Nazev_polozky AND
-EXISTS (SELECT Surovina.Cena FROM Surovina WHERE Surovina.Nazev_suroviny = Obsahuje.Nazev_suroviny AND Cena > 50 )));
-SELECT * FROM TABLE(DBMS_XPLAN.display);
-
 COMMIT;
+
